@@ -1,0 +1,45 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    #    url: jdbc:mysql://localhost:3306/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    #    url: jdbc:mysql://root:nsonPiIbzvynTYYecyPShqverExxqOgj@autorack.proxy.rlwy.net:41936/railway
+    username: root
+    password: ${MYSQL_ROOT_PASSWORD:checkra1n}
+    #    password:
+    #    password: nsonPiIbzvynTYYecyPShqverExxqOgj
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+
+  jpa:
+    hibernate:
+      ddl-auto: none # No automatic schema updates (use 'update', 'create', 'create-drop', or 'none' as per your need)
+    #      ddl-auto: update
+    show-sql: true # Show SQL queries in the console
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect # Specify MySQL 8 dialect for Hibernate
+
+  # Enable multipart file upload
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+# JWT Secret Configuration là thuật toán (xác thực tính toàn vẹn) đây là dạng security khá tốt
+jwt:
+  secret: nguyNp#7xQ2@$fRt9Z^5jL*p8wBvE3mK1oS4yD6gH0aU2cX!7nI&bF4qW@zV%xT3mP6dJ*s9K1fL$5rY8eG0hZ
+  expirationMs: 2592000000
+audi:
+  app:
+    jwtSecret: audiSecretKey123456789aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+    jwtExpirationMs: 2592000000
+    password:
+      encryption:
+        key: "AudiSecretKey123" # Thay đổi thành một key bảo mật hơn trong môi trường production
+
+logging:
+  level:
+    org.springframework.security: DEBUG  # Enable detailed Spring Security logs
+#server:
+#  port: 8899

@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: audi-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: checkra1n
+      MYSQL_DATABASE: cua_hang_audi
+      MYSQL_USER: user  # Thêm người dùng khác nếu cần
+      MYSQL_PASSWORD: password  # Mật khẩu cho người dùng này
+    ports:
+      - "3307:3306"  # Map cổng 3307 ở máy host tới 3306 trong container
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./sql/audi.sql:/docker-entrypoint-initdb.d/audi.sql
+    command: --default-authentication-plugin=mysql_native_password  # Đảm bảo tương thích với các ứng dụng cũ hơn
+
+  app:
+    build: .
+    container_name: apple
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: checkra1n
+      SPRING_JPA_HIBERNATE_DDL_AUTO: none
+    ports:
+      - "8080:8080"
+    restart: unless-stopped  # Tự động khởi động lại container khi gặp lỗi
+
+volumes:
+  mysql-data:
