@@ -1,18 +1,18 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+#    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     #    url: jdbc:mysql://localhost:3306/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    #    url: jdbc:mysql://root:nsonPiIbzvynTYYecyPShqverExxqOgj@autorack.proxy.rlwy.net:41936/railway
+    url: jdbc:mysql://root:sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt@interchange.proxy.rlwy.net:36948/railway
     username: root
-    password: ${MYSQL_ROOT_PASSWORD:checkra1n}
+#    password: ${MYSQL_ROOT_PASSWORD:checkra1n}
     #    password:
-    #    password: nsonPiIbzvynTYYecyPShqverExxqOgj
+    password: sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 
   jpa:
     hibernate:
-      ddl-auto: none # No automatic schema updates (use 'update', 'create', 'create-drop', or 'none' as per your need)
+      ddl-auto: update # No automatic schema updates (use 'update', 'create', 'create-drop', or 'none' as per your need)
     #      ddl-auto: update
     show-sql: true # Show SQL queries in the console
     properties:
