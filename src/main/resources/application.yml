@@ -1,12 +1,12 @@
 spring:
   datasource:
-#    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     #    url: jdbc:mysql://localhost:3306/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-    url: jdbc:mysql://root:sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt@interchange.proxy.rlwy.net:36948/railway
+#    url: jdbc:mysql://root:sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt@interchange.proxy.rlwy.net:36948/railway
     username: root
-#    password: ${MYSQL_ROOT_PASSWORD:checkra1n}
+    password: ${MYSQL_ROOT_PASSWORD:checkra1n}
     #    password:
-    password: sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt
+#    password: sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 

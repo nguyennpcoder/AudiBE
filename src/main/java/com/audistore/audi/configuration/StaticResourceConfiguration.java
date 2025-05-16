@@ -16,21 +16,37 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        String uploadDir = "uploads/images/vehicles";
-        Path uploadPath = Paths.get(uploadDir);
-        File uploadDirFile = uploadPath.toFile();
+        // Configure for vehicle images
+        String uploadDirVehicles = "uploads/images/vehicles";
+        Path uploadPathVehicles = Paths.get(uploadDirVehicles);
+        File uploadDirFileVehicles = uploadPathVehicles.toFile();
 
         // Create the uploads directory if it doesn't exist
-        if (!uploadDirFile.exists()) {
-            boolean created = uploadDirFile.mkdirs();
-            logger.info("Uploads directory {}: {}", uploadDirFile.getAbsolutePath(), created ? "created" : "already exists");
+        if (!uploadDirFileVehicles.exists()) {
+            boolean created = uploadDirFileVehicles.mkdirs();
+            logger.info("Uploads directory for vehicles {}: {}", uploadDirFileVehicles.getAbsolutePath(), created ? "created" : "already exists");
         }
 
-        String uploadAbsolutePath = uploadDirFile.getAbsolutePath();
-        logger.info("Serving static resources from: {}", uploadAbsolutePath);
+        // Configure for color images
+        String uploadDirColors = "uploads/images/colors";
+        Path uploadPathColors = Paths.get(uploadDirColors);
+        File uploadDirFileColors = uploadPathColors.toFile();
 
-        // Change this line - map the URL pattern without duplicating the path
-        registry.addResourceHandler("/uploads/images/vehicles/**")
-                .addResourceLocations("file:" + uploadPath.toFile().getAbsolutePath() + File.separator);
+        // Create the uploads directory for colors if it doesn't exist
+        if (!uploadDirFileColors.exists()) {
+            boolean created = uploadDirFileColors.mkdirs();
+            logger.info("Uploads directory for colors {}: {}", uploadDirFileColors.getAbsolutePath(), created ? "created" : "already exists");
+        }
+
+        logger.info("Serving vehicle static resources from: {}", uploadDirFileVehicles.getAbsolutePath());
+        logger.info("Serving color static resources from: {}", uploadDirFileColors.getAbsolutePath());
+
+        // Register vehicle images resource handler
+        registry.addResourceHandler("uploads/images/vehicles/**")
+                .addResourceLocations("file:" + uploadPathVehicles.toFile().getAbsolutePath() + File.separator);
+        
+        // Register color images resource handler
+        registry.addResourceHandler("uploads/images/colors/**")
+                .addResourceLocations("file:" + uploadPathColors.toFile().getAbsolutePath() + File.separator);
     }
 }

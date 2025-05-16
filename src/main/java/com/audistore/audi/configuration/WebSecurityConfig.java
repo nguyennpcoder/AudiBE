@@ -62,7 +62,10 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> 
                 auth
                     // Thêm dòng này để cho phép truy cập không cần xác thực vào thư mục uploads
-                    .requestMatchers("/uploads/**").permitAll()
+                     .requestMatchers("/uploads/**").permitAll()
+                    .requestMatchers("/uploads/images/**").permitAll()
+                    .requestMatchers("/uploads/images/vehicles/**").permitAll()
+                    .requestMatchers("/uploads/images/colors/**").permitAll()
                     
                     // Giữ nguyên các cấu hình còn lại
                     .requestMatchers("/api/v1/auth/**").permitAll()
@@ -227,6 +230,8 @@ public class WebSecurityConfig {
                     .requestMatchers("/api/v1/quan-ly-nhan-vien/**").hasRole("QUAN_TRI")
 
                     .requestMatchers(HttpMethod.GET, "/api/v1/mau-sac/**").permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/api/v1/hinh-anh-theo-mau/**").permitAll()
 
                     .anyRequest().authenticated()
             );
