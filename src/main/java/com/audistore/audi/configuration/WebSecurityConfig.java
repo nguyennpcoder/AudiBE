@@ -66,6 +66,7 @@ public class WebSecurityConfig {
                     .requestMatchers("/uploads/images/**").permitAll()
                     .requestMatchers("/uploads/images/vehicles/**").permitAll()
                     .requestMatchers("/uploads/images/colors/**").permitAll()
+                    .requestMatchers("/uploads/images/interiors/**").permitAll()
                     
                     // Giữ nguyên các cấu hình còn lại
                     .requestMatchers("/api/v1/auth/**").permitAll()
@@ -232,6 +233,11 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.GET, "/api/v1/mau-sac/**").permitAll()
 
                     .requestMatchers(HttpMethod.GET, "/api/v1/hinh-anh-theo-mau/**").permitAll()
+
+                    .requestMatchers(HttpMethod.GET, "/api/v1/noi-that/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/noi-that/**").hasRole("QUAN_TRI")
+                    .requestMatchers(HttpMethod.PUT, "/api/v1/noi-that/**").hasRole("QUAN_TRI")
+                    .requestMatchers(HttpMethod.DELETE, "/api/v1/noi-that/**").hasRole("QUAN_TRI")
 
                     .anyRequest().authenticated()
             );

@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-// Xóa import org.hibernate.annotations.Type không còn sử dụng
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
@@ -74,6 +73,14 @@ public class MauXe {
     )
     private List<MauSac> danhSachMauSac = new ArrayList<>();
 
+    @ManyToMany
+    @JoinTable(
+            name = "mau_xe_noi_that",
+            joinColumns = @JoinColumn(name = "id_mau"),
+            inverseJoinColumns = @JoinColumn(name = "id_noi_that")
+    )
+    private List<NoiThat> danhSachNoiThat = new ArrayList<>();
+
     @OneToMany(mappedBy = "mauXe", cascade = CascadeType.ALL)
     private List<TonKho> danhSachTonKho = new ArrayList<>();
 
@@ -82,4 +89,7 @@ public class MauXe {
 
     @OneToMany(mappedBy = "mauXe", cascade = CascadeType.ALL)
     private List<CauHinhTuyChiNh> danhSachCauHinh = new ArrayList<>();
+
+    @OneToMany(mappedBy = "mauXe", cascade = CascadeType.ALL)
+    private List<MauXeNoiThat> danhSachMauXeNoiThat = new ArrayList<>();
 }

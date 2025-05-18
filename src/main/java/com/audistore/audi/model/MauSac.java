@@ -34,6 +34,8 @@ public class MauSac {
 
     @Column(name = "duong_dan_anh")
     private String duongDanAnh;
+    @Column(name = "duong_dan_anh_noi_that")
+    private String duongDanAnhNoiThat;
 
     @Column(name = "gia_them", precision = 10, scale = 2)
     private BigDecimal giaThem = BigDecimal.ZERO;

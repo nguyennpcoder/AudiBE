@@ -38,15 +38,39 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
             logger.info("Uploads directory for colors {}: {}", uploadDirFileColors.getAbsolutePath(), created ? "created" : "already exists");
         }
 
+        // Configure for interior images
+        String uploadDirInteriors = "uploads/images/interiors";
+        Path uploadPathInteriors = Paths.get(uploadDirInteriors);
+        File uploadDirFileInteriors = uploadPathInteriors.toFile();
+
+        // Create the uploads directory for interiors if it doesn't exist
+        if (!uploadDirFileInteriors.exists()) {
+            boolean created = uploadDirFileInteriors.mkdirs();
+            logger.info("Uploads directory for interiors {}: {}", uploadDirFileInteriors.getAbsolutePath(), created ? "created" : "already exists");
+        }
+
         logger.info("Serving vehicle static resources from: {}", uploadDirFileVehicles.getAbsolutePath());
         logger.info("Serving color static resources from: {}", uploadDirFileColors.getAbsolutePath());
+        logger.info("Serving interior static resources from: {}", uploadDirFileInteriors.getAbsolutePath());
+
+        // Register root uploads directory resource handler
+        registry.addResourceHandler("/uploads/**")
+                .addResourceLocations("file:uploads/")
+                .setCachePeriod(3600);
 
         // Register vehicle images resource handler
-        registry.addResourceHandler("uploads/images/vehicles/**")
-                .addResourceLocations("file:" + uploadPathVehicles.toFile().getAbsolutePath() + File.separator);
-        
+        registry.addResourceHandler("/uploads/images/vehicles/**")
+                .addResourceLocations("file:" + uploadPathVehicles.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
+
         // Register color images resource handler
-        registry.addResourceHandler("uploads/images/colors/**")
-                .addResourceLocations("file:" + uploadPathColors.toFile().getAbsolutePath() + File.separator);
+        registry.addResourceHandler("/uploads/images/colors/**")
+                .addResourceLocations("file:" + uploadPathColors.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
+
+        // Register interior images resource handler
+        registry.addResourceHandler("/uploads/images/interiors/**")
+                .addResourceLocations("file:" + uploadPathInteriors.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
     }
 }
