@@ -49,9 +49,21 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
             logger.info("Uploads directory for interiors {}: {}", uploadDirFileInteriors.getAbsolutePath(), created ? "created" : "already exists");
         }
 
+        // Configure for vehicles interiors images
+        String uploadDirVehiclesInteriors = "uploads/images/vehicles_interiors";
+        Path uploadPathVehiclesInteriors = Paths.get(uploadDirVehiclesInteriors);
+        File uploadDirFileVehiclesInteriors = uploadPathVehiclesInteriors.toFile();
+
+        // Create the uploads directory for vehicles interiors if it doesn't exist
+        if (!uploadDirFileVehiclesInteriors.exists()) {
+            boolean created = uploadDirFileVehiclesInteriors.mkdirs();
+            logger.info("Uploads directory for vehicles interiors {}: {}", uploadDirFileVehiclesInteriors.getAbsolutePath(), created ? "created" : "already exists");
+        }
+
         logger.info("Serving vehicle static resources from: {}", uploadDirFileVehicles.getAbsolutePath());
         logger.info("Serving color static resources from: {}", uploadDirFileColors.getAbsolutePath());
         logger.info("Serving interior static resources from: {}", uploadDirFileInteriors.getAbsolutePath());
+        logger.info("Serving vehicles interiors static resources from: {}", uploadDirFileVehiclesInteriors.getAbsolutePath());
 
         // Register root uploads directory resource handler
         registry.addResourceHandler("/uploads/**")
@@ -71,6 +83,11 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
         // Register interior images resource handler
         registry.addResourceHandler("/uploads/images/interiors/**")
                 .addResourceLocations("file:" + uploadPathInteriors.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
+
+        // Register vehicles interiors images resource handler
+        registry.addResourceHandler("/uploads/images/vehicles_interiors/**")
+                .addResourceLocations("file:" + uploadPathVehiclesInteriors.toFile().getAbsolutePath() + File.separator)
                 .setCachePeriod(3600);
     }
 }

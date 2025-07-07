@@ -62,12 +62,13 @@ public class WebSecurityConfig {
             .authorizeHttpRequests(auth -> 
                 auth
                     // Thêm dòng này để cho phép truy cập không cần xác thực vào thư mục uploads
-                     .requestMatchers("/uploads/**").permitAll()
+                    .requestMatchers("/uploads/**").permitAll()
                     .requestMatchers("/uploads/images/**").permitAll()
                     .requestMatchers("/uploads/images/vehicles/**").permitAll()
                     .requestMatchers("/uploads/images/colors/**").permitAll()
                     .requestMatchers("/uploads/images/interiors/**").permitAll()
-                    
+                    .requestMatchers("/uploads/images/vehicles_interiors/**").permitAll()
+
                     // Giữ nguyên các cấu hình còn lại
                     .requestMatchers("/api/v1/auth/**").permitAll()
                     .requestMatchers("/api/v1/public/**").permitAll()
@@ -239,6 +240,12 @@ public class WebSecurityConfig {
                     .requestMatchers(HttpMethod.PUT, "/api/v1/noi-that/**").hasRole("QUAN_TRI")
                     .requestMatchers(HttpMethod.DELETE, "/api/v1/noi-that/**").hasRole("QUAN_TRI")
 
+
+// Thêm dòng này sau các cấu hình hiện có cho hinh-anh-theo-noi-that và trước .anyRequest().authenticated()
+                    .requestMatchers(HttpMethod.GET, "/api/v1/hinh-anh-theo-noi-that/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/v1/hinh-anh-theo-noi-that/**").hasRole("QUAN_TRI")
+                    .requestMatchers(HttpMethod.PUT, "/api/v1/hinh-anh-theo-noi-that/**").hasRole("QUAN_TRI")
+                    .requestMatchers(HttpMethod.DELETE, "/api/v1/hinh-anh-theo-noi-that/**").hasRole("QUAN_TRI")
                     .anyRequest().authenticated()
             );
         
