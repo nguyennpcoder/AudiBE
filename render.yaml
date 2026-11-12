@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: audibe
+    runtime: docker
+    plan: free
+    region: oregon
+    branch: master
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/mau-xe
+    autoDeploy: true
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: JPA_DDL_AUTO
+        value: update
+      - key: SPRING_CACHE_TYPE
+        value: simple
+      - key: DB_POOL_SIZE
+        value: "5"
+      - key: APP_CORS_ORIGINS
+        value: https://audivn.web.app,https://audivn.firebaseapp.com,https://audi-1109.web.app,https://audi-1109.firebaseapp.com,http://localhost:5173
+      - key: FIREBASE_SERVICE_ACCOUNT_BASE64
+        sync: false
+      - key: JAVA_OPTS
+        value: -XX:MaxRAMPercentage=75 -XX:+UseSerialGC -XX:TieredStopAtLevel=1
