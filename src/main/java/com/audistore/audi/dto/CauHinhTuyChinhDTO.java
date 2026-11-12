@@ -29,6 +29,16 @@ public class CauHinhTuyChinhDTO {
     private Long idMauSac;
     private String tenMauSac;
 
+    // Thêm trường nội thất
+    private Long idNoiThat;
+    private String tenNoiThat;
+    private BigDecimal giaNoiThat;
+
+    // Thêm trường bánh xe
+    private Long idBanhXe;
+    private String tenBanhXe;
+    private BigDecimal giaBanhXe;
+
     private String ten;
 
     @NotNull(message = "Tổng giá không được để trống")
@@ -40,4 +50,8 @@ public class CauHinhTuyChinhDTO {
 
     private List<Long> danhSachIdTuyChon;
     private List<TuyChonDTO> danhSachTuyChon;
+    
+    // Thêm trường khuyến mãi
+    private KhuyenMaiDTO khuyenMai;
+    private BigDecimal giaSauKhuyenMai;
 }

@@ -33,25 +33,30 @@ public class AuthTokenFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String jwt = parseJwt(request);
-            logger.info("JWT received: {}", jwt); // Thêm log này
+            logger.info("Request URI: {}", request.getRequestURI());
+            logger.info("JWT received: {}", jwt != null ? "Present" : "Null");
 
             if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
                 String username = jwtUtils.getUserNameFromJwtToken(jwt);
-                logger.info("Username from token: {}", username); // Thêm log này
+                logger.info("Username from token: {}", username);
 
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                logger.info("User authorities: {}", userDetails.getAuthorities());
+                
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-                logger.info("Authentication successful"); // Thêm log này
+                logger.info("Authentication successful for user: {}", username);
             } else if (jwt != null) {
-                logger.error("JWT validation failed"); // Thêm log này
+                logger.error("JWT validation failed");
+            } else {
+                logger.warn("No JWT token found in request");
             }
         } catch (Exception e) {
             logger.error("Cannot set user authentication: {}", e.getMessage());
-            e.printStackTrace(); // Thêm dòng này để xem stack trace đầy đủ
+            e.printStackTrace();
         }
 
         filterChain.doFilter(request, response);

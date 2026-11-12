@@ -17,6 +17,7 @@ public class DanhGiaDTO {
     @NotNull(message = "ID người dùng không được để trống")
     private Long idNguoiDung;
     private String tenNguoiDung;
+    private String avatarNguoiDung;
 
     @NotNull(message = "ID mẫu xe không được để trống")
     private Long idMauXe;
@@ -25,7 +26,7 @@ public class DanhGiaDTO {
     @NotNull(message = "Số sao không được để trống")
     @Min(value = 1, message = "Số sao tối thiểu là 1")
     @Max(value = 5, message = "Số sao tối đa là 5")
-    private Integer soSao;
+    private Double soSao;
 
     @Size(max = 100, message = "Tiêu đề không được vượt quá 100 ký tự")
     private String tieuDe;

@@ -4,6 +4,8 @@ import com.audistore.audi.dto.DongXeDTO;
 import com.audistore.audi.model.DongXe;
 import com.audistore.audi.repository.DongXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,18 +23,21 @@ public class DongXeService {
         this.dongXeRepository = dongXeRepository;
     }
 
+    @Cacheable(cacheNames = "dongXe:all")
     public List<DongXeDTO> getAllDongXe() {
         return dongXeRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "dongXe:byId", key = "#id")
     public DongXeDTO getDongXeById(Long id) {
         return dongXeRepository.findById(id)
                 .map(this::mapToDTO)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy dòng xe với ID: " + id));
     }
 
+    @Cacheable(cacheNames = "dongXe:byPhanLoai", key = "#phanLoai")
     public List<DongXeDTO> getDongXeByPhanLoai(String phanLoai) {
         try {
             DongXe.PhanLoai loai = DongXe.PhanLoai.valueOf(phanLoai);
@@ -44,12 +49,14 @@ public class DongXeService {
         }
     }
 
+    @Cacheable(cacheNames = "dongXe:search", key = "#keyword")
     public List<DongXeDTO> searchDongXe(String keyword) {
         return dongXeRepository.findByTenContainingIgnoreCase(keyword).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
+    @CacheEvict(cacheNames = {"dongXe:all", "dongXe:byPhanLoai", "dongXe:search"}, allEntries = true)
     public DongXeDTO createDongXe(DongXeDTO dongXeDTO) {
         if (dongXeRepository.existsByTen(dongXeDTO.getTen())) {
             throw new RuntimeException("Dòng xe với tên này đã tồn tại");
@@ -60,6 +67,7 @@ public class DongXeService {
         return mapToDTO(savedDongXe);
     }
 
+    @CacheEvict(cacheNames = {"dongXe:all", "dongXe:byId", "dongXe:byPhanLoai", "dongXe:search"}, allEntries = true)
     public DongXeDTO updateDongXe(Long id, DongXeDTO dongXeDTO) {
         DongXe existingDongXe = dongXeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy dòng xe với ID: " + id));
@@ -69,6 +77,7 @@ public class DongXeService {
         return mapToDTO(updatedDongXe);
     }
 
+    @CacheEvict(cacheNames = {"dongXe:all", "dongXe:byId", "dongXe:byPhanLoai", "dongXe:search"}, allEntries = true)
     public void deleteDongXe(Long id) {
         if (!dongXeRepository.existsById(id)) {
             throw new RuntimeException("Không tìm thấy dòng xe với ID: " + id);

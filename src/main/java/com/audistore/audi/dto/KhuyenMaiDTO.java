@@ -1,6 +1,5 @@
 package com.audistore.audi.dto;
 
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -35,7 +34,7 @@ public class KhuyenMaiDTO {
     private LocalDate ngayBatDau;
 
     @NotNull(message = "Ngày kết thúc không được để trống")
-    @Future(message = "Ngày kết thúc phải là ngày trong tương lai")
+    // Bỏ @Future validation
     private LocalDate ngayKetThuc;
 
     private String maKhuyenMai;
@@ -50,6 +49,8 @@ public class KhuyenMaiDTO {
     private Integer soLanDaDung;
 
     private boolean conHieuLuc;
+    
+    private Integer trangThai = 1; // 1: còn hiệu lực, 0: hết hiệu lực
 
     private List<DieuKienKhuyenMaiDTO> danhSachDieuKien = new ArrayList<>();
 }

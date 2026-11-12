@@ -16,7 +16,7 @@ public class NguoiDungDTO {
     @NotBlank(message = "Email không được để trống")
     @Email(message = "Email không hợp lệ")
     private String email;
-
+    private String avatar;
     private String matKhau;
 
     @NotBlank(message = "Họ không được để trống")

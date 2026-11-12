@@ -26,9 +26,24 @@ services:
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: checkra1n
       SPRING_JPA_HIBERNATE_DDL_AUTO: none
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_PASSWORD: audi-redis-password
+      SPRING_CACHE_TYPE: redis
     ports:
       - "8080:8080"
     restart: unless-stopped  # Tự động khởi động lại container khi gặp lỗi
 
+  redis:
+    image: redis:7.2-alpine
+    container_name: audi-redis
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "audi-redis-password"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
 volumes:
   mysql-data:
+  redis-data:

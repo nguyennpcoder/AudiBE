@@ -91,6 +91,10 @@ public class TonKhoService {
     }
 
     public KiemTraTonKhoDTO kiemTraTonKho(Long mauXeId) {
+        if (mauXeId == null) {
+            throw new RuntimeException("Mã mẫu xe không được để trống");
+        }
+        
         MauXe mauXe = mauXeRepository.findById(mauXeId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe với ID: " + mauXeId));
         
@@ -104,7 +108,8 @@ public class TonKhoService {
         KiemTraTonKhoDTO result = new KiemTraTonKhoDTO();
         result.setIdMau(mauXe.getId());
         result.setTenMau(mauXe.getTenMau());
-        result.setTongSoLuong(tonKhoRepository.countAvailableByMauXe(mauXeId));
+        Integer tongSoLuong = tonKhoRepository.countAvailableByMauXe(mauXeId);
+        result.setTongSoLuong(tongSoLuong);
         result.setSoLuongCoSan(danhSachCoSan.size());
         
         // Thêm chi tiết theo đại lý
@@ -120,6 +125,10 @@ public class TonKhoService {
         });
         
         result.setChiTietTheoDaiLy(chiTiet);
+        
+        // Không tự động cập nhật trạng thái conHang nữa
+        // Việc cập nhật trạng thái conHang sẽ được thực hiện riêng biệt khi có thay đổi tồn kho thực tế
+        
         return result;
     }
 
@@ -131,6 +140,10 @@ public class TonKhoService {
         
         TonKho tonKho = mapToEntity(tonKhoDTO);
         TonKho savedTonKho = tonKhoRepository.save(tonKho);
+        
+        // Kiểm tra và cập nhật trạng thái conHang của mẫu xe
+        kiemTraVaCapNhatTrangThaiMauXe(tonKho.getMauXe().getId());
+        
         return mapToDTO(savedTonKho);
     }
 
@@ -147,14 +160,22 @@ public class TonKhoService {
         
         updateEntityFromDTO(existingTonKho, tonKhoDTO);
         TonKho updatedTonKho = tonKhoRepository.save(existingTonKho);
+        
+        // Kiểm tra và cập nhật trạng thái conHang của mẫu xe
+        kiemTraVaCapNhatTrangThaiMauXe(updatedTonKho.getMauXe().getId());
+        
         return mapToDTO(updatedTonKho);
     }
 
     public void deleteTonKho(Long id) {
-        if (!tonKhoRepository.existsById(id)) {
-            throw new RuntimeException("Không tìm thấy tồn kho với ID: " + id);
-        }
+        TonKho tonKho = tonKhoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tồn kho với ID: " + id));
+        
+        Long mauXeId = tonKho.getMauXe().getId();
         tonKhoRepository.deleteById(id);
+        
+        // Kiểm tra và cập nhật trạng thái conHang của mẫu xe
+        kiemTraVaCapNhatTrangThaiMauXe(mauXeId);
     }
 
     public TonKhoDTO capNhatTrangThaiTonKho(Long id, String trangThai) {
@@ -165,9 +186,31 @@ public class TonKhoService {
             TonKho.TrangThai trangThaiEnum = TonKho.TrangThai.valueOf(trangThai);
             tonKho.setTrangThai(trangThaiEnum);
             TonKho updatedTonKho = tonKhoRepository.save(tonKho);
+            
+            // Kiểm tra và cập nhật trạng thái conHang của mẫu xe
+            kiemTraVaCapNhatTrangThaiMauXe(tonKho.getMauXe().getId());
+            
             return mapToDTO(updatedTonKho);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException("Trạng thái không hợp lệ: " + trangThai);
+        }
+    }
+
+    // Phương thức kiểm tra và cập nhật trạng thái conHang của mẫu xe
+    private void kiemTraVaCapNhatTrangThaiMauXe(Long mauXeId) {
+        // Lấy thông tin mẫu xe
+        MauXe mauXe = mauXeRepository.findById(mauXeId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe với ID: " + mauXeId));
+        
+        // Kiểm tra số lượng xe có sẵn trong kho
+        List<TonKho> danhSachCoSan = tonKhoRepository.findAvailableByMauXe(mauXeId);
+        
+        // Cập nhật trạng thái conHang của mẫu xe dựa trên số lượng có sẵn
+        boolean shouldConHang = !danhSachCoSan.isEmpty();
+        if (mauXe.getConHang() != shouldConHang) {
+            mauXe.setConHang(shouldConHang);
+            mauXeRepository.save(mauXe);
+            System.out.println("Updated conHang status for mau xe " + mauXeId + " to " + shouldConHang);
         }
     }
 

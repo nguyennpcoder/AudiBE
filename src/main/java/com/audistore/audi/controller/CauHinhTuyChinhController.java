@@ -5,14 +5,21 @@ import com.audistore.audi.security.service.UserDetailsImpl;
 import com.audistore.audi.service.CauHinhTuyChinhService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/cau-hinh")
 public class CauHinhTuyChinhController {
@@ -36,7 +43,17 @@ public class CauHinhTuyChinhController {
     
     @GetMapping("/nguoi-dung/{idNguoiDung}")
     public ResponseEntity<List<CauHinhTuyChinhDTO>> getCauHinhTuyChinhByNguoiDung(@PathVariable Long idNguoiDung) {
-        return ResponseEntity.ok(cauHinhTuyChinhService.getCauHinhTuyChinhByNguoiDung(idNguoiDung));
+        log.info("Nhận request lấy cấu hình cho người dùng ID: {}", idNguoiDung);
+        
+        try {
+            List<CauHinhTuyChinhDTO> result = cauHinhTuyChinhService.getCauHinhTuyChinhByNguoiDung(idNguoiDung);
+            log.info("Trả về {} cấu hình cho người dùng ID: {}", result.size(), idNguoiDung);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("Lỗi khi lấy cấu hình cho người dùng ID {}: {}", idNguoiDung, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ArrayList<>());
+        }
     }
     
     @GetMapping("/mau-xe/{idMauXe}")
@@ -55,7 +72,19 @@ public class CauHinhTuyChinhController {
     @PostMapping
     public ResponseEntity<CauHinhTuyChinhDTO> createCauHinhTuyChinh(
             @Valid @RequestBody CauHinhTuyChinhDTO cauHinhTuyChinhDTO) {
-        return new ResponseEntity<>(cauHinhTuyChinhService.createCauHinhTuyChinh(cauHinhTuyChinhDTO), HttpStatus.CREATED);
+        try {
+            log.info("Nhận request tạo cấu hình: {}", cauHinhTuyChinhDTO);
+            
+            CauHinhTuyChinhDTO createdCauHinh = cauHinhTuyChinhService.createCauHinhTuyChinh(cauHinhTuyChinhDTO);
+            
+            log.info("Đã tạo cấu hình thành công với ID: {}", createdCauHinh.getId());
+            
+            return new ResponseEntity<>(createdCauHinh, HttpStatus.CREATED);
+        } catch (Exception e) {
+            log.error("Lỗi khi tạo cấu hình: ", e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null);
+        }
     }
     
     @PutMapping("/{id}")
@@ -94,5 +123,48 @@ public class CauHinhTuyChinhController {
         dto.setTongGia(tongGia);
         
         return new ResponseEntity<>(cauHinhTuyChinhService.createCauHinhTuyChinh(dto), HttpStatus.CREATED);
+    }
+
+
+
+    @GetMapping("/{id}/pdf")
+    public ResponseEntity<Resource> xuatPDF(@PathVariable Long id) {
+        try {
+            log.info("Đang xuất PDF cho cấu hình ID: {}", id);
+            
+            // Lấy cấu hình theo ID
+            CauHinhTuyChinhDTO cauHinh = cauHinhTuyChinhService.getCauHinhTuyChinhById(id);
+            if (cauHinh == null) {
+                log.warn("Không tìm thấy cấu hình với ID: {}", id);
+                return ResponseEntity.notFound().build();
+            }
+            
+            // Tạo PDF
+            byte[] pdfBytes = cauHinhTuyChinhService.xuatPDF(cauHinh);
+            
+            // Tạo resource từ byte array
+            ByteArrayResource resource = new ByteArrayResource(pdfBytes);
+            
+            // Tạo filename an toàn
+            String safeName = cauHinh.getTenMau() != null ? 
+                cauHinh.getTenMau().replaceAll("[^a-zA-Z0-9\\s-]", "") : "unknown";
+            String filename = String.format("cau-hinh-xe-%s-%s.pdf", 
+                safeName,
+                java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")));
+            
+            log.info("Đã tạo PDF thành công: {}", filename);
+            
+            return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .header(HttpHeaders.ACCESS_CONTROL_EXPOSE_HEADERS, "Content-Disposition, Content-Length, Content-Type")
+                .contentType(MediaType.APPLICATION_PDF)
+                .contentLength(pdfBytes.length)
+                .body(resource);
+                
+        } catch (Exception e) {
+            log.error("Lỗi khi xuất PDF: ", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new ByteArrayResource("Lỗi khi tạo PDF".getBytes()));
+        }
     }
 }

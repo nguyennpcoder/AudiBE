@@ -1,6 +1,7 @@
 package com.audistore.audi.controller;
 
 import com.audistore.audi.dto.KhuyenMaiDTO;
+import com.audistore.audi.model.KhuyenMai;
 import com.audistore.audi.service.KhuyenMaiService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,7 +93,7 @@ public class KhuyenMaiController {
     @PreAuthorize("hasRole('QUAN_TRI')")
     public ResponseEntity<KhuyenMaiDTO> capNhatKhuyenMai(
             @PathVariable Long id, 
-            @Valid @RequestBody KhuyenMaiDTO khuyenMaiDTO) {
+            @RequestBody KhuyenMaiDTO khuyenMaiDTO) { // Bỏ @Valid tạm thời
         return ResponseEntity.ok(khuyenMaiService.capNhatKhuyenMai(id, khuyenMaiDTO));
     }
     
@@ -148,6 +149,52 @@ public class KhuyenMaiController {
         
         Map<String, Boolean> response = new HashMap<>();
         response.put("thanhCong", Boolean.TRUE);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('QUAN_TRI')")
+    public ResponseEntity<Map<String, String>> updateStatus(@PathVariable Long id, @RequestBody Map<String, Integer> request) {
+        try {
+            Integer trangThai = request.get("trangThai");
+            khuyenMaiService.updateStatus(id, trangThai);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Cập nhật trạng thái thành công");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/ap-dung")
+    public ResponseEntity<Map<String, Object>> apDungKhuyenMai(
+            @RequestParam BigDecimal tongGia) {
+        
+        // Tìm khuyến mãi phù hợp nhất cho tổng giá
+        KhuyenMai khuyenMai = khuyenMaiService.timKhuyenMaiPhuHopNhat(tongGia);
+        
+        Map<String, Object> response = new HashMap<>();
+        
+        if (khuyenMai != null) {
+            BigDecimal giaSauKhuyenMai = khuyenMaiService.tinhGiaSauKhuyenMai(tongGia, khuyenMai.getId());
+            BigDecimal tienGiam = tongGia.subtract(giaSauKhuyenMai);
+            
+            response.put("idKhuyenMai", khuyenMai.getId());
+            response.put("ten", khuyenMai.getTen());
+            response.put("loaiKhuyenMai", khuyenMai.getLoaiGiamGia().name());
+            response.put("giaTri", khuyenMai.getGiaTriGiam());
+            response.put("giaBanDau", tongGia);
+            response.put("giaSauKhuyenMai", giaSauKhuyenMai);
+            response.put("tienGiam", tienGiam);
+            response.put("coApDung", true);
+        } else {
+            response.put("coApDung", false);
+            response.put("thongBao", "Không có khuyến mãi phù hợp");
+        }
+        
         return ResponseEntity.ok(response);
     }
 }

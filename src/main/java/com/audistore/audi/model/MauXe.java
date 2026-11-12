@@ -92,4 +92,15 @@ public class MauXe {
 
     @OneToMany(mappedBy = "mauXe", cascade = CascadeType.ALL)
     private List<MauXeNoiThat> danhSachMauXeNoiThat = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+            name = "mau_xe_banh_xe",
+            joinColumns = @JoinColumn(name = "id_mau"),
+            inverseJoinColumns = @JoinColumn(name = "id_banh_xe")
+    )
+    private List<BanhXe> danhSachBanhXe = new ArrayList<>();
+
+    @OneToMany(mappedBy = "mauXe", cascade = CascadeType.ALL)
+    private List<MauXeBanhXe> danhSachMauXeBanhXe = new ArrayList<>();
 }

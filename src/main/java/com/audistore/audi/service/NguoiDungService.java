@@ -141,6 +141,9 @@ public class NguoiDungService implements UserDetailsService {
         dto.setId(nguoiDung.getId());
         dto.setEmail(nguoiDung.getEmail());
         
+        // Thêm avatar vào DTO
+        dto.setAvatar(nguoiDung.getAvatar());
+        
         // Thêm mật khẩu đã mã hóa vào DTO
         dto.setMatKhau(nguoiDung.getMatKhauMaHoa());
         
@@ -180,6 +183,11 @@ public class NguoiDungService implements UserDetailsService {
 
     private void updateEntityFromDTO(NguoiDung nguoiDung, NguoiDungDTO dto) {
         // Skip ID as it shouldn't be updated
+        
+        // Cập nhật avatar nếu có
+        if (dto.getAvatar() != null) {
+            nguoiDung.setAvatar(dto.getAvatar());
+        }
         
         nguoiDung.setHo(dto.getHo());
         nguoiDung.setTen(dto.getTen());

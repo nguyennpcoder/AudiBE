@@ -67,25 +67,25 @@ public class ThanhToanService {
     }
     
     @Transactional
-    public ThanhToanDTO createThanhToan(ThanhToanDTO thanhToanDTO) {
-        ThanhToan thanhToan = mapToEntity(thanhToanDTO);
-        ThanhToan savedThanhToan = thanhToanRepository.save(thanhToan);
-        
-        // Cập nhật trạng thái đơn hàng dựa vào loại thanh toán
-        DonHang donHang = thanhToan.getDonHang();
-        
-        if (thanhToan.getLoaiThanhToan() == ThanhToan.LoaiThanhToan.dat_coc &&
-                thanhToan.getTrangThai() == ThanhToan.TrangThai.hoan_thanh) {
-            donHang.setTrangThai(DonHang.TrangThai.da_dat_coc);
-            donHangRepository.save(donHang);
-        } else if (thanhToan.getLoaiThanhToan() == ThanhToan.LoaiThanhToan.toan_bo &&
-                thanhToan.getTrangThai() == ThanhToan.TrangThai.hoan_thanh) {
-            donHang.setTrangThai(DonHang.TrangThai.dang_xu_ly);
-            donHangRepository.save(donHang);
-        }
-        
-        return mapToDTO(savedThanhToan);
+public ThanhToanDTO createThanhToan(ThanhToanDTO thanhToanDTO) {
+    ThanhToan thanhToan = mapToEntity(thanhToanDTO);
+    ThanhToan savedThanhToan = thanhToanRepository.save(thanhToan);
+
+    // Cập nhật trạng thái đơn hàng dựa vào loại thanh toán
+    DonHang donHang = thanhToan.getDonHang();
+
+    if (thanhToan.getLoaiThanhToan() == ThanhToan.LoaiThanhToan.dat_coc &&
+            thanhToan.getTrangThai() == ThanhToan.TrangThai.hoan_thanh) {
+        donHang.setTrangThai(DonHang.TrangThai.da_dat_coc);
+    } else if (thanhToan.getLoaiThanhToan() == ThanhToan.LoaiThanhToan.toan_bo &&
+            thanhToan.getTrangThai() == ThanhToan.TrangThai.hoan_thanh) {
+        donHang.setTrangThai(DonHang.TrangThai.dang_xu_ly);
     }
+
+    donHangRepository.save(donHang); // Cập nhật lại đơn hàng sau khi tạo thanh toán
+
+    return mapToDTO(savedThanhToan);
+}
     
     public ThanhToanDTO updateThanhToan(Long id, ThanhToanDTO thanhToanDTO) {
         ThanhToan existingThanhToan = thanhToanRepository.findById(id)

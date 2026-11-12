@@ -101,7 +101,27 @@ public class DaiLyService {
         dto.setQuocGia(daiLy.getQuocGia());
         dto.setSoDienThoai(daiLy.getSoDienThoai());
         dto.setEmail(daiLy.getEmail());
-        dto.setGioLamViec(daiLy.getGioLamViec());
+        
+        // Parse JSON string thành object nếu cần
+        String gioLamViec = daiLy.getGioLamViec();
+        if (gioLamViec != null && !gioLamViec.trim().isEmpty()) {
+            try {
+                // Kiểm tra xem có phải JSON string không
+                if (gioLamViec.startsWith("{") && gioLamViec.endsWith("}")) {
+                    // Đây là JSON string, giữ nguyên để frontend parse
+                    dto.setGioLamViec(gioLamViec);
+                } else {
+                    // Nếu không phải JSON, có thể là string đơn giản
+                    dto.setGioLamViec(gioLamViec);
+                }
+            } catch (Exception e) {
+                // Nếu có lỗi parse, giữ nguyên string
+                dto.setGioLamViec(gioLamViec);
+            }
+        } else {
+            dto.setGioLamViec("{}");
+        }
+        
         dto.setViTriDiaLy(daiLy.getViTriDiaLy());
         dto.setLaTrungTamDichVu(daiLy.getLaTrungTamDichVu());
         

@@ -37,6 +37,16 @@ public class CauHinhTuyChiNh {
     @JoinColumn(name = "id_mau_sac", nullable = false)
     private MauSac mauSac;
 
+    // Thêm trường nội thất
+    @ManyToOne
+    @JoinColumn(name = "id_noi_that")
+    private NoiThat noiThat;
+
+    // Thêm trường bánh xe
+    @ManyToOne
+    @JoinColumn(name = "id_banh_xe")
+    private BanhXe banhXe;
+
     @Column(name = "ten")
     private String ten;
 

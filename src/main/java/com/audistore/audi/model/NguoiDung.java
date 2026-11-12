@@ -26,6 +26,8 @@ public class NguoiDung {
 
     @Column(name = "email", unique = true, nullable = false)
     private String email;
+    @Column(name = "avatar")
+    private String avatar;
 
     @Column(name = "mat_khau_ma_hoa", nullable = false)
     private String matKhauMaHoa;
@@ -85,6 +87,12 @@ public class NguoiDung {
 
     @OneToMany(mappedBy = "nguoiDung", cascade = CascadeType.ALL)
     private List<DonHang> danhSachDonHang = new ArrayList<>();
+
+    @Column(name = "reset_token")
+    private String resetToken;
+    
+    @Column(name = "reset_token_expiry")
+    private Long resetTokenExpiry;
 
     public enum VaiTro {
         khach_hang, quan_tri, ban_hang, ho_tro

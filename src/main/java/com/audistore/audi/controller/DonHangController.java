@@ -110,4 +110,43 @@ public class DonHangController {
         
         return ResponseEntity.ok(List.of());
     }
+
+    // Thêm API mới để tạo đơn hàng từ cấu hình
+    @PostMapping("/tu-cau-hinh")
+    public ResponseEntity<DonHangDTO> taoDonHangTuCauHinh(
+            @RequestParam Long idCauHinh,
+            @RequestParam Long idDaiLy,
+            @RequestParam(required = false) BigDecimal tienDatCoc,
+            @RequestParam(required = false) String phuongThucThanhToan,
+            @RequestParam(required = false) String ghiChu,
+            @RequestParam(required = false) Long idKhuyenMai) {
+        
+        return new ResponseEntity<>(
+            donHangService.taoDonHangTuCauHinh(
+                idCauHinh, 
+                idDaiLy, 
+                tienDatCoc, 
+                phuongThucThanhToan, 
+                ghiChu, 
+                idKhuyenMai
+            ), 
+            HttpStatus.CREATED
+        );
+    }
+
+    // API cập nhật trạng thái đơn hàng
+    @PutMapping("/{id}/trang-thai")
+    public ResponseEntity<DonHangDTO> capNhatTrangThaiDonHang(
+            @PathVariable Long id,
+            @RequestParam String trangThai,
+            @RequestParam(required = false) String ghiChu) {
+        
+        return ResponseEntity.ok(donHangService.capNhatTrangThaiDonHang(id, trangThai, ghiChu));
+    }
+
+    // API lấy thống kê đơn hàng
+    @GetMapping("/thong-ke")
+    public ResponseEntity<Map<String, Object>> getThongKeDonHang() {
+        return ResponseEntity.ok(donHangService.getThongKeDonHang());
+    }
 }

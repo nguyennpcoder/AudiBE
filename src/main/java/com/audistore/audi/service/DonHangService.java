@@ -13,7 +13,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Transactional
@@ -26,6 +29,7 @@ public class DonHangService {
     private final CauHinhTuyChinhRepository cauHinhTuyChinhRepository;
     private final KhuyenMaiService khuyenMaiService;
     private final KhuyenMaiRepository khuyenMaiRepository;
+    private final MauXeRepository mauXeRepository; // Thêm MauXeRepository
     
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -38,7 +42,8 @@ public class DonHangService {
             DaiLyRepository daiLyRepository,
             CauHinhTuyChinhRepository cauHinhTuyChinhRepository,
             KhuyenMaiService khuyenMaiService,
-            KhuyenMaiRepository khuyenMaiRepository) {
+            KhuyenMaiRepository khuyenMaiRepository,
+            MauXeRepository mauXeRepository) { // Thêm MauXeRepository vào constructor
         this.donHangRepository = donHangRepository;
         this.nguoiDungRepository = nguoiDungRepository;
         this.tonKhoRepository = tonKhoRepository;
@@ -46,6 +51,7 @@ public class DonHangService {
         this.cauHinhTuyChinhRepository = cauHinhTuyChinhRepository;
         this.khuyenMaiService = khuyenMaiService;
         this.khuyenMaiRepository = khuyenMaiRepository;
+        this.mauXeRepository = mauXeRepository; // Khởi tạo MauXeRepository
     }
 
     public List<DonHangDTO> getAllDonHang() {
@@ -80,6 +86,21 @@ public class DonHangService {
     }
     
     public DonHangDTO createDonHang(DonHangDTO donHangDTO) {
+        // Kiểm tra trạng thái còn hàng của các mẫu xe trong đơn hàng
+        for (ChiTietDonHangDTO chiTiet : donHangDTO.getChiTietDonHangDTOs()) {
+            if (chiTiet.getIdMauXe() != null) {
+                // Lấy thông tin mẫu xe từ repository
+                Optional<MauXe> mauXeOpt = mauXeRepository.findById(chiTiet.getIdMauXe());
+                
+                if (mauXeOpt.isPresent()) {
+                    MauXe mauXe = mauXeOpt.get();
+                    if (!mauXe.getConHang()) {
+                        throw new RuntimeException("Mẫu xe " + mauXe.getTenMau() + " hiện đã hết hàng. Vui lòng chọn mẫu xe khác.");
+                    }
+                }
+            }
+        }
+        
         DonHang donHang = mapToEntity(donHangDTO);
         
         // Nếu đơn hàng có tonKho, cập nhật trạng thái của tonKho thành "đã đặt"
@@ -345,5 +366,107 @@ public class DonHangService {
         }
         
         return dto;
+    }
+
+    // Thêm method mới để tạo đơn hàng từ cấu hình
+    public DonHangDTO taoDonHangTuCauHinh(
+            Long idCauHinh,
+            Long idDaiLy,
+            BigDecimal tienDatCoc,
+            String phuongThucThanhToan,
+            String ghiChu,
+            Long idKhuyenMai) {
+        
+        // Lấy cấu hình
+        CauHinhTuyChiNh cauHinh = cauHinhTuyChinhRepository.findById(idCauHinh)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy cấu hình với ID: " + idCauHinh));
+        
+        // Lấy đại lý
+        DaiLy daiLy = daiLyRepository.findById(idDaiLy)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đại lý với ID: " + idDaiLy));
+        
+        // Lấy người dùng từ cấu hình
+        NguoiDung nguoiDung = cauHinh.getNguoiDung();
+        
+        // Tính tổng tiền
+        BigDecimal tongTien = cauHinh.getTongGia();
+        BigDecimal tienGiam = BigDecimal.ZERO;
+        
+        // Áp dụng khuyến mãi nếu có
+        KhuyenMai khuyenMai = null;
+        if (idKhuyenMai != null) {
+            khuyenMai = khuyenMaiRepository.findById(idKhuyenMai).orElse(null);
+            if (khuyenMai != null) {
+                tienGiam = khuyenMaiService.tinhTienGiam(tongTien, idKhuyenMai);
+                tongTien = tongTien.subtract(tienGiam);
+            }
+        }
+        
+        // Tạo đơn hàng mới
+        DonHang donHang = new DonHang();
+        donHang.setNguoiDung(nguoiDung);
+        donHang.setCauHinh(cauHinh);
+        donHang.setDaiLy(daiLy);
+        donHang.setTienDatCoc(tienDatCoc != null ? tienDatCoc : BigDecimal.ZERO);
+        donHang.setTongTien(tongTien);
+        donHang.setTienGiam(tienGiam);
+        donHang.setPhuongThucThanhToan(phuongThucThanhToan);
+        donHang.setGhiChu(ghiChu);
+        donHang.setTrangThai(DonHang.TrangThai.cho_xu_ly);
+        donHang.setKhuyenMai(khuyenMai);
+        
+        // Lưu đơn hàng
+        DonHang donHangSaved = donHangRepository.save(donHang);
+        
+        return mapToDTO(donHangSaved);
+    }
+
+    // Method cập nhật trạng thái đơn hàng
+    public DonHangDTO capNhatTrangThaiDonHang(Long idDonHang, String trangThai, String ghiChu) {
+        DonHang donHang = donHangRepository.findById(idDonHang)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng với ID: " + idDonHang));
+        
+        // Cập nhật trạng thái
+        donHang.setTrangThai(DonHang.TrangThai.valueOf(trangThai));
+        
+        // Cập nhật ghi chú nếu có
+        if (ghiChu != null && !ghiChu.trim().isEmpty()) {
+            donHang.setGhiChu(ghiChu);
+        }
+        
+        // Cập nhật ngày giao dự kiến nếu chuyển sang trạng thái đang xử lý
+        if (trangThai.equals("dang_xu_ly")) {
+            donHang.setNgayGiaoDuKien(LocalDate.now().plusMonths(2)); // Giao sau 2 tháng
+        }
+        
+        // Cập nhật ngày giao thực tế nếu chuyển sang trạng thái đã giao
+        if (trangThai.equals("da_giao")) {
+            donHang.setNgayGiaoThucTe(LocalDate.now());
+        }
+        
+        DonHang donHangUpdated = donHangRepository.save(donHang);
+        return mapToDTO(donHangUpdated);
+    }
+
+    // Method lấy thống kê đơn hàng
+    public Map<String, Object> getThongKeDonHang() {
+        Map<String, Object> thongKe = new HashMap<>();
+        
+        // Đếm theo trạng thái
+        thongKe.put("cho_xu_ly", donHangRepository.countByTrangThai(DonHang.TrangThai.cho_xu_ly));
+        thongKe.put("da_dat_coc", donHangRepository.countByTrangThai(DonHang.TrangThai.da_dat_coc));
+        thongKe.put("dang_xu_ly", donHangRepository.countByTrangThai(DonHang.TrangThai.dang_xu_ly));
+        thongKe.put("san_sang_giao", donHangRepository.countByTrangThai(DonHang.TrangThai.san_sang_giao));
+        thongKe.put("da_giao", donHangRepository.countByTrangThai(DonHang.TrangThai.da_giao));
+        thongKe.put("da_huy", donHangRepository.countByTrangThai(DonHang.TrangThai.da_huy));
+        
+        // Tổng doanh thu
+        BigDecimal tongDoanhThu = donHangRepository.findAll().stream()
+                .filter(dh -> dh.getTrangThai() == DonHang.TrangThai.da_giao)
+                .map(DonHang::getTongTien)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        thongKe.put("tong_doanh_thu", tongDoanhThu);
+        
+        return thongKe;
     }
 }

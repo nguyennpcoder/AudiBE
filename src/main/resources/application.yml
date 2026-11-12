@@ -1,30 +1,68 @@
-spring:
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-    #    url: jdbc:mysql://localhost:3306/cua_hang_audi?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-#    url: jdbc:mysql://root:sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt@interchange.proxy.rlwy.net:36948/railway
-    username: root
-    password: ${MYSQL_ROOT_PASSWORD:checkra1n}
-    #    password:
-#    password: sCGPuPhmlaqsBybTLtSUWUEwyQWAZutt
-    driver-class-name: com.mysql.cj.jdbc.Driver
+server:
+  port: ${PORT:8088}
+  compression:
+    enabled: true
+    min-response-size: 1024
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,application/javascript,text/javascript,image/svg+xml
 
+spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    # Production (Supabase/Postgres). Set SPRING_DATASOURCE_URL/ USERNAME / PASSWORD on the host.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/audi}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.postgresql.Driver}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 300000
+      max-lifetime: 900000
 
   jpa:
+    open-in-view: true
     hibernate:
-      ddl-auto: update # No automatic schema updates (use 'update', 'create', 'create-drop', or 'none' as per your need)
-    #      ddl-auto: update
-    show-sql: true # Show SQL queries in the console
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect # Specify MySQL 8 dialect for Hibernate
+        dialect: ${JPA_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        jdbc:
+          time_zone: UTC
+        type:
+          preferred_enum_jdbc_type: VARCHAR
+        format_sql: false
 
   # Enable multipart file upload
   servlet:
     multipart:
       enabled: true
-      max-file-size: 100MB
-      max-request-size: 100MB
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+  # Redis configuration (overridable by env vars)
+  data:
+    redis:
+      host: ${SPRING_DATA_REDIS_HOST:localhost}
+      port: ${SPRING_DATA_REDIS_PORT:6379}
+      password: ${SPRING_DATA_REDIS_PASSWORD:}
+  cache:
+    type: ${SPRING_CACHE_TYPE:simple}
+
+  # Email configuration - MOVED HERE from under logging
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: nkockik@gmail.com
+    password: kovejadsrwlrtvjj
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 # JWT Secret Configuration là thuật toán (xác thực tính toàn vẹn) đây là dạng security khá tốt
 jwt:
@@ -40,6 +78,31 @@ audi:
 
 logging:
   level:
-    org.springframework.security: DEBUG  # Enable detailed Spring Security logs
+    root: INFO
+    org.springframework.security: ${LOG_SECURITY_LEVEL:INFO}
+    org.springframework.web: ${LOG_WEB_LEVEL:INFO}
+    com.audistore.audi: ${LOG_APP_LEVEL:INFO}
+    org.hibernate.SQL: ${LOG_SQL_LEVEL:WARN}
+    org.hibernate.orm.jdbc.bind: ${LOG_SQL_PARAMS_LEVEL:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 #server:
 #  port: 8899
+
+vnpay:
+  tmnCode: FLI7KLX5
+  hashSecret: DLF1RI3A50EB76U9RH2N44HF1INGMKXV
+  payUrl: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  
+zalopay:
+  appId: ${ZALOPAY_APP_ID:554}
+  key1: ${ZALOPAY_KEY1:8NdU5pG5R2spGHGhyO99HN1OhD8IQJBn}
+  key2: ${ZALOPAY_KEY2:uUfsWgfLkRLzq6W2uNXTCxrfxs51auny}
+  createUrl: ${ZALOPAY_CREATE_URL:https://sb-openapi.zalopay.vn/v2/create}
+  gatewayUrl: ${ZALOPAY_GATEWAY_URL:https://sandbox.zalopay.com.vn/v001/tpe/createorder}
+
+momo:
+  partnerCode: ${MOMO_PARTNER_CODE:MOMO}
+  accessKey: ${MOMO_ACCESS_KEY:F8BBA842ECF85}
+  secretKey: ${MOMO_SECRET_KEY:K951B6PE1waDMi640xX08PD3vg6EkVlz}
+  createUrl: ${MOMO_CREATE_URL:https://test-payment.momo.vn/v2/gateway/api/create}

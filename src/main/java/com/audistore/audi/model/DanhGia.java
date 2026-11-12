@@ -29,7 +29,7 @@ public class DanhGia {
     private MauXe mauXe;
 
     @Column(name = "so_sao", nullable = false)
-    private Integer soSao;
+    private Double soSao;
 
     @Column(name = "tieu_de")
     private String tieuDe;

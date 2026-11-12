@@ -31,7 +31,7 @@ public class UserDetailsImpl implements UserDetails {
     private Collection<? extends GrantedAuthority> authorities;
 
     public UserDetailsImpl(Long id, String email, String soDienThoai, String ho, String ten, 
-            String matKhau, boolean trangThai, Collection<? extends GrantedAuthority> authorities) {
+            String matKhau, boolean trangThai, String avatar, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
         this.email = email;
         this.soDienThoai = soDienThoai;
@@ -39,6 +39,7 @@ public class UserDetailsImpl implements UserDetails {
         this.ten = ten;
         this.matKhau = matKhau;
         this.trangThai = trangThai;
+        this.avatar = avatar;
         this.authorities = authorities;
     }
 
@@ -63,7 +64,9 @@ public class UserDetailsImpl implements UserDetails {
                 nguoiDung.getTen(),
                 nguoiDung.getMatKhauMaHoa(),
                 nguoiDung.getTrangThai(),
-                authorities);
+                nguoiDung.getAvatar(), // hoặc getAnhDaiDien(), getAnh_dai_dien() nếu DB lưu tên khác
+                authorities
+        );
     }
 
     @Override
@@ -108,7 +111,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return trangThai;
+        return true; // Không lock account, chỉ dựa vào trangThai
     }
 
     @Override
@@ -118,7 +121,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return trangThai;
+        return trangThai; // Chỉ dựa vào trangThai để quyết định user có được đăng nhập hay không
     }
 
     @Override
@@ -129,5 +132,11 @@ public class UserDetailsImpl implements UserDetails {
             return false;
         UserDetailsImpl user = (UserDetailsImpl) o;
         return Objects.equals(id, user.id);
+    }
+
+    private String avatar; // hoặc anhDaiDien, anh_dai_dien nếu cần
+
+    public String getAvatar() {
+        return avatar;
     }
 }

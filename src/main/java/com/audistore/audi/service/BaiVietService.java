@@ -12,6 +12,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,12 +44,14 @@ public class BaiVietService {
         this.objectMapper = objectMapper;
     }
 
+    @Cacheable(cacheNames = "baiViet:all")
     public List<BaiVietDTO> getAllBaiViet() {
         return baiVietRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
     
+    @Cacheable(cacheNames = "baiViet:paged", key = "#page + ':' + #size + ':' + #sortBy + ':' + #sortDir")
     public Page<BaiVietDTO> getPagedBaiViet(int page, int size, String sortBy, String sortDir) {
         Sort sort = sortDir.equalsIgnoreCase("desc") ? 
                 Sort.by(sortBy).descending() : 
@@ -59,18 +63,21 @@ public class BaiVietService {
                 .map(this::mapToDTO);
     }
     
+    @Cacheable(cacheNames = "baiViet:public", key = "#page + ':' + #size")
     public Page<BaiVietDTO> getPublicBaiViet(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("ngayDang").descending());
         return baiVietRepository.findByDaXuatBan(true, pageable)
                 .map(this::mapToDTO);
     }
 
+    @Cacheable(cacheNames = "baiViet:byId", key = "#id")
     public BaiVietDTO getBaiVietById(Long id) {
         return baiVietRepository.findById(id)
                 .map(this::mapToDTO)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết với ID: " + id));
     }
     
+    @Cacheable(cacheNames = "baiViet:byTacGia", key = "#idTacGia")
     public List<BaiVietDTO> getBaiVietByTacGia(Long idTacGia) {
         NguoiDung tacGia = nguoiDungRepository.findById(idTacGia)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tác giả với ID: " + idTacGia));
@@ -80,6 +87,7 @@ public class BaiVietService {
                 .collect(Collectors.toList());
     }
     
+    @Cacheable(cacheNames = "baiViet:byDanhMuc", key = "#danhMuc")
     public List<BaiVietDTO> getBaiVietByDanhMuc(String danhMuc) {
         BaiViet.DanhMuc danhMucEnum = BaiViet.DanhMuc.valueOf(danhMuc);
         
@@ -88,6 +96,7 @@ public class BaiVietService {
                 .collect(Collectors.toList());
     }
     
+    @Cacheable(cacheNames = "baiViet:publicByDanhMuc", key = "#danhMuc + ':' + #page + ':' + #size")
     public Page<BaiVietDTO> getPublicBaiVietByDanhMuc(String danhMuc, int page, int size) {
         BaiViet.DanhMuc danhMucEnum = BaiViet.DanhMuc.valueOf(danhMuc);
         Pageable pageable = PageRequest.of(page, size, Sort.by("ngayDang").descending());
@@ -96,12 +105,14 @@ public class BaiVietService {
                 .map(this::mapToDTO);
     }
     
+    @Cacheable(cacheNames = "baiViet:search", key = "#keyword")
     public List<BaiVietDTO> searchBaiViet(String keyword) {
         return baiVietRepository.searchBaiViet(keyword).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
     
+    @Cacheable(cacheNames = "baiViet:searchPublic", key = "#keyword + ':' + #page + ':' + #size")
     public Page<BaiVietDTO> searchPublicBaiViet(String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("ngayDang").descending());
         
@@ -109,17 +120,20 @@ public class BaiVietService {
                 .map(this::mapToDTO);
     }
     
+    @Cacheable(cacheNames = "baiViet:byTag", key = "#tag")
     public List<BaiVietDTO> getBaiVietByTag(String tag) {
         return baiVietRepository.findByTag(tag).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
     
+    @CacheEvict(cacheNames = {"baiViet:all", "baiViet:paged", "baiViet:public", "baiViet:byTacGia", "baiViet:byDanhMuc", "baiViet:publicByDanhMuc", "baiViet:search", "baiViet:searchPublic", "baiViet:byTag"}, allEntries = true)
     public BaiVietDTO createBaiViet(BaiVietDTO baiVietDTO) {
         BaiViet baiViet = mapToEntity(baiVietDTO);
         return mapToDTO(baiVietRepository.save(baiViet));
     }
     
+    @CacheEvict(cacheNames = {"baiViet:all", "baiViet:paged", "baiViet:public", "baiViet:byId", "baiViet:byTacGia", "baiViet:byDanhMuc", "baiViet:publicByDanhMuc", "baiViet:search", "baiViet:searchPublic", "baiViet:byTag"}, allEntries = true)
     public BaiVietDTO updateBaiViet(Long id, BaiVietDTO baiVietDTO) {
         BaiViet existingBaiViet = baiVietRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết với ID: " + id));
@@ -130,6 +144,7 @@ public class BaiVietService {
         return mapToDTO(baiVietRepository.save(existingBaiViet));
     }
     
+    @CacheEvict(cacheNames = {"baiViet:all", "baiViet:paged", "baiViet:public", "baiViet:byId", "baiViet:publicByDanhMuc"}, allEntries = true)
     public BaiVietDTO updateTrangThaiBaiViet(Long id, Boolean daXuatBan) {
         BaiViet existingBaiViet = baiVietRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bài viết với ID: " + id));
@@ -139,6 +154,7 @@ public class BaiVietService {
         return mapToDTO(baiVietRepository.save(existingBaiViet));
     }
     
+    @CacheEvict(cacheNames = {"baiViet:all", "baiViet:paged", "baiViet:public", "baiViet:byId", "baiViet:byTacGia", "baiViet:byDanhMuc", "baiViet:publicByDanhMuc", "baiViet:search", "baiViet:searchPublic", "baiViet:byTag"}, allEntries = true)
     public void deleteBaiViet(Long id) {
         baiVietRepository.deleteById(id);
     }
@@ -233,6 +249,7 @@ public class BaiVietService {
         if (baiViet.getTacGia() != null) {
             dto.setIdTacGia(baiViet.getTacGia().getId());
             dto.setTenTacGia(baiViet.getTacGia().getHo() + " " + baiViet.getTacGia().getTen());
+            dto.setAvatarTacGia(baiViet.getTacGia().getAvatar()); // Thêm avatar của tác giả
         }
         
         // Thông tin ngày đăng

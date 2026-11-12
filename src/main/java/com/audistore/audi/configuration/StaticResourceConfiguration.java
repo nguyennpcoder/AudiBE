@@ -60,10 +60,58 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
             logger.info("Uploads directory for vehicles interiors {}: {}", uploadDirFileVehiclesInteriors.getAbsolutePath(), created ? "created" : "already exists");
         }
 
+        // Configure for avatar user images
+        String uploadDirAvatarUser = "uploads/images/avatar_user";
+        Path uploadPathAvatarUser = Paths.get(uploadDirAvatarUser);
+        File uploadDirFileAvatarUser = uploadPathAvatarUser.toFile();
+
+        // Create the uploads directory for avatar_user if it doesn't exist
+        if (!uploadDirFileAvatarUser.exists()) {
+            boolean created = uploadDirFileAvatarUser.mkdirs();
+            logger.info("Uploads directory for avatar_user {}: {}", uploadDirFileAvatarUser.getAbsolutePath(), created ? "created" : "already exists");
+        }
+
+        // Configure for blog images
+        String uploadDirBlogs = "uploads/images/blogs";
+        Path uploadPathBlogs = Paths.get(uploadDirBlogs);
+        File uploadDirFileBlogs = uploadPathBlogs.toFile();
+
+        // Create the uploads directory for blogs if it doesn't exist
+        if (!uploadDirFileBlogs.exists()) {
+            boolean created = uploadDirFileBlogs.mkdirs();
+            logger.info("Uploads directory for blogs {}: {}", uploadDirFileBlogs.getAbsolutePath(), created ? "created" : "already exists");
+        }
+
+        // Thêm cấu hình cho thư mục wheels
+        String uploadDirWheels = "uploads/images/wheels";
+        Path uploadPathWheels = Paths.get(uploadDirWheels);
+        File uploadDirFileWheels = uploadPathWheels.toFile();
+
+        // Create the uploads directory for wheels if it doesn't exist
+        if (!uploadDirFileWheels.exists()) {
+            boolean created = uploadDirFileWheels.mkdirs();
+            logger.info("Uploads directory for wheels {}: {}", uploadDirFileWheels.getAbsolutePath(), created ? "created" : "already exists");
+        }
+
+        // Thêm cấu hình cho thư mục vehicles_wheels
+        String uploadDirVehiclesWheels = "uploads/images/vehicles_wheels";
+        Path uploadPathVehiclesWheels = Paths.get(uploadDirVehiclesWheels);
+        File uploadDirFileVehiclesWheels = uploadPathVehiclesWheels.toFile();
+
+        // Create the uploads directory for vehicles_wheels if it doesn't exist
+        if (!uploadDirFileVehiclesWheels.exists()) {
+            boolean created = uploadDirFileVehiclesWheels.mkdirs();
+            logger.info("Uploads directory for vehicles_wheels {}: {}", uploadDirFileVehiclesWheels.getAbsolutePath(), created ? "created" : "already exists");
+        }
+
         logger.info("Serving vehicle static resources from: {}", uploadDirFileVehicles.getAbsolutePath());
         logger.info("Serving color static resources from: {}", uploadDirFileColors.getAbsolutePath());
         logger.info("Serving interior static resources from: {}", uploadDirFileInteriors.getAbsolutePath());
         logger.info("Serving vehicles interiors static resources from: {}", uploadDirFileVehiclesInteriors.getAbsolutePath());
+        logger.info("Serving avatar_user static resources from: {}", uploadDirFileAvatarUser.getAbsolutePath());
+        logger.info("Serving blog static resources from: {}", uploadDirFileBlogs.getAbsolutePath());
+        logger.info("Serving wheels static resources from: {}", uploadDirFileWheels.getAbsolutePath());
+        logger.info("Serving vehicles_wheels static resources from: {}", uploadDirFileVehiclesWheels.getAbsolutePath());
 
         // Register root uploads directory resource handler
         registry.addResourceHandler("/uploads/**")
@@ -88,6 +136,26 @@ public class StaticResourceConfiguration implements WebMvcConfigurer {
         // Register vehicles interiors images resource handler
         registry.addResourceHandler("/uploads/images/vehicles_interiors/**")
                 .addResourceLocations("file:" + uploadPathVehiclesInteriors.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
+
+        // Register avatar user images resource handler
+        registry.addResourceHandler("/uploads/images/avatar_user/**")
+                .addResourceLocations("file:" + uploadPathAvatarUser.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
+
+        // Register blog images resource handler
+        registry.addResourceHandler("/uploads/images/blogs/**")
+                .addResourceLocations("file:" + uploadPathBlogs.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
+
+        // Register wheels images resource handler
+        registry.addResourceHandler("/uploads/images/wheels/**")
+                .addResourceLocations("file:" + uploadPathWheels.toFile().getAbsolutePath() + File.separator)
+                .setCachePeriod(3600);
+
+        // Register vehicles_wheels images resource handler
+        registry.addResourceHandler("/uploads/images/vehicles_wheels/**")
+                .addResourceLocations("file:" + uploadPathVehiclesWheels.toFile().getAbsolutePath() + File.separator)
                 .setCachePeriod(3600);
     }
 }

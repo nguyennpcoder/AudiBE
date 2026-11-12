@@ -1,6 +1,7 @@
 package com.audistore.audi.controller;
 
 import com.audistore.audi.dto.DanhGiaDTO;
+import com.audistore.audi.security.service.UserDetailsImpl;
 import com.audistore.audi.service.DanhGiaService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -54,10 +56,20 @@ public class DanhGiaController {
     public ResponseEntity<Map<String, Object>> getDanhGiaByMauXe(
             @PathVariable(name = "idMauXe") Long idMauXe,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            Authentication authentication) {
         
-        Page<DanhGiaDTO> danhGiaPage = danhGiaService.getDanhGiaByMauXe(idMauXe, page, size);
+        Page<DanhGiaDTO> danhGiaPage;
         double trungBinhSao = danhGiaService.tinhTrungBinhSaoMauXe(idMauXe);
+        
+        // Nếu có xác thực, lấy cả đánh giá đang chờ duyệt của người dùng hiện tại
+        if (authentication != null && authentication.isAuthenticated()) {
+            Long currentUserId = ((UserDetailsImpl) authentication.getPrincipal()).getId();
+            danhGiaPage = danhGiaService.getDanhGiaByMauXeForDisplay(idMauXe, currentUserId, page, size);
+        } else {
+            // Nếu không có xác thực, chỉ lấy đánh giá đã duyệt
+            danhGiaPage = danhGiaService.getDanhGiaByMauXe(idMauXe, page, size);
+        }
         
         Map<String, Object> response = new HashMap<>();
         response.put("danhGia", danhGiaPage.getContent());
@@ -129,9 +141,19 @@ public class DanhGiaController {
 
     @GetMapping("/mau-xe/{idMauXe}/trung-binh")
     public ResponseEntity<Map<String, Object>> getTrungBinhSaoMauXe(
-            @PathVariable(name = "idMauXe") Long idMauXe) {
+            @PathVariable(name = "idMauXe") Long idMauXe,
+            Authentication authentication) {
         
-        double trungBinhSao = danhGiaService.tinhTrungBinhSaoMauXe(idMauXe);
+        double trungBinhSao;
+        
+        // Nếu có xác thực, tính trung bình bao gồm cả đánh giá đang chờ duyệt của người dùng hiện tại
+        if (authentication != null && authentication.isAuthenticated()) {
+            Long currentUserId = ((UserDetailsImpl) authentication.getPrincipal()).getId();
+            trungBinhSao = danhGiaService.tinhTrungBinhSaoMauXeForDisplay(idMauXe, currentUserId);
+        } else {
+            // Nếu không có xác thực, chỉ tính trung bình từ đánh giá đã duyệt
+            trungBinhSao = danhGiaService.tinhTrungBinhSaoMauXe(idMauXe);
+        }
         
         Map<String, Object> response = new HashMap<>();
         response.put("idMauXe", idMauXe);

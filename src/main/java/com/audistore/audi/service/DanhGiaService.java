@@ -58,8 +58,19 @@ public class DanhGiaService {
 
     public Page<DanhGiaDTO> getDanhGiaByMauXe(Long idMauXe, int pageNo, int pageSize) {
         Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("ngayTao").descending());
+        
+        // Lấy tất cả đánh giá đã duyệt
         Page<DanhGia> danhGias = danhGiaRepository.findByMauXeIdAndTrangThai(
                 idMauXe, DanhGia.TrangThai.da_duyet, pageable);
+        return danhGias.map(this::mapToDTO);
+    }
+    
+    public Page<DanhGiaDTO> getDanhGiaByMauXeForDisplay(Long idMauXe, Long currentUserId, int pageNo, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by("ngayTao").descending());
+        
+        // Lấy tất cả đánh giá đã duyệt + đánh giá đang chờ duyệt của người dùng hiện tại
+        Page<DanhGia> danhGias = danhGiaRepository.findByMauXeIdAndTrangThaiAndCurrentUserId(
+                idMauXe, DanhGia.TrangThai.da_duyet, currentUserId, pageable);
         return danhGias.map(this::mapToDTO);
     }
 
@@ -108,6 +119,7 @@ public class DanhGiaService {
     }
 
     public double tinhTrungBinhSaoMauXe(Long idMauXe) {
+        // Lấy tất cả đánh giá đã duyệt
         List<DanhGia> danhGias = danhGiaRepository.findByMauXeIdAndTrangThai(
                 idMauXe, DanhGia.TrangThai.da_duyet);
         
@@ -116,7 +128,23 @@ public class DanhGiaService {
         }
         
         double tongSao = danhGias.stream()
-                .mapToInt(DanhGia::getSoSao)
+                .mapToDouble(DanhGia::getSoSao)
+                .sum();
+                
+        return tongSao / danhGias.size();
+    }
+    
+    public double tinhTrungBinhSaoMauXeForDisplay(Long idMauXe, Long currentUserId) {
+        // Lấy tất cả đánh giá đã duyệt + đánh giá đang chờ duyệt của người dùng hiện tại
+        List<DanhGia> danhGias = danhGiaRepository.findByMauXeIdAndTrangThaiAndCurrentUserId(
+                idMauXe, DanhGia.TrangThai.da_duyet, currentUserId, Pageable.unpaged()).getContent();
+        
+        if (danhGias.isEmpty()) {
+            return 0;
+        }
+        
+        double tongSao = danhGias.stream()
+                .mapToDouble(DanhGia::getSoSao)
                 .sum();
                 
         return tongSao / danhGias.size();
@@ -160,6 +188,7 @@ public class DanhGiaService {
         dto.setId(entity.getId());
         dto.setIdNguoiDung(entity.getNguoiDung().getId());
         dto.setTenNguoiDung(entity.getNguoiDung().getHo() + " " + entity.getNguoiDung().getTen());
+        dto.setAvatarNguoiDung(entity.getNguoiDung().getAvatar());
         dto.setIdMauXe(entity.getMauXe().getId());
         dto.setTenMauXe(entity.getMauXe().getTenMau());
         dto.setSoSao(entity.getSoSao());

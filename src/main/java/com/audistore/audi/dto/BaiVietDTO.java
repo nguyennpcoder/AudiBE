@@ -27,6 +27,7 @@ public class BaiVietDTO {
     @NotNull(message = "ID tác giả không được để trống")
     private Long idTacGia;
     private String tenTacGia;
+    private String avatarTacGia; // Thêm trường avatar của tác giả
 
     private String ngayDang;
     private Boolean daXuatBan;

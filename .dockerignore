@@ -1,0 +1,10 @@
+# Build context exclusions (keeps Render builds fast)
+.git
+.gitignore
+target
+uploads
+*.log
+.idea
+*.iml
+.DS_Store
+src/main/resources/firebase-service-account.json

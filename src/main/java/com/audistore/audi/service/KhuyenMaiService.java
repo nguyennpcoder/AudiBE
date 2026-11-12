@@ -36,6 +36,9 @@ public class KhuyenMaiService {
     @Autowired
     private TuyChonRepository tuyChonRepository;
     
+    @Autowired
+    private DoanhThuKhuyenMaiRepository doanhThuKhuyenMaiRepository;
+
     @Transactional
     public KhuyenMaiDTO taoKhuyenMai(KhuyenMaiDTO dto) {
         // Kiểm tra mã khuyến mãi nếu có
@@ -56,7 +59,8 @@ public class KhuyenMaiService {
         khuyenMai.setApDungCho(KhuyenMai.LoaiApDung.valueOf(dto.getApDungCho()));
         khuyenMai.setGiaTriToiThieu(dto.getGiaTriToiThieu());
         khuyenMai.setGioiHanSuDung(dto.getGioiHanSuDung());
-        khuyenMai.setSoLanDaDung(0);
+        khuyenMai.setSoLanDaDung(dto.getSoLanDaDung());
+        khuyenMai.setTrangThai(1); // Mặc định là còn hiệu lực
         
         KhuyenMai savedKhuyenMai = khuyenMaiRepository.save(khuyenMai);
         
@@ -136,6 +140,16 @@ public class KhuyenMaiService {
         khuyenMai.setApDungCho(KhuyenMai.LoaiApDung.valueOf(dto.getApDungCho()));
         khuyenMai.setGiaTriToiThieu(dto.getGiaTriToiThieu());
         khuyenMai.setGioiHanSuDung(dto.getGioiHanSuDung());
+        khuyenMai.setSoLanDaDung(dto.getSoLanDaDung());
+        
+        
+        // Cập nhật trạng thái - sửa logic này
+        if (dto.getTrangThai() != null) {
+            khuyenMai.setTrangThai(dto.getTrangThai());
+        } else {
+            // Nếu không có trangThai trong request, giữ nguyên giá trị hiện tại
+            khuyenMai.setTrangThai(khuyenMai.getTrangThai());
+        }
         
         KhuyenMai updatedKhuyenMai = khuyenMaiRepository.save(khuyenMai);
         
@@ -249,6 +263,65 @@ public class KhuyenMaiService {
         }
     }
     
+    public BigDecimal tinhTienGiam(BigDecimal giaBanDau, Long idKhuyenMai) {
+        if (idKhuyenMai == null) {
+            return BigDecimal.ZERO;
+        }
+        
+        KhuyenMai khuyenMai = khuyenMaiRepository.findById(idKhuyenMai)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + idKhuyenMai));
+        
+        if (!khuyenMai.conHieuLuc()) {
+            throw new RuntimeException("Khuyến mãi đã hết hiệu lực");
+        }
+        
+        if (!khuyenMai.hợpLeChoGiaTriDonHang(giaBanDau)) {
+            throw new RuntimeException("Giá trị đơn hàng không đủ để áp dụng khuyến mãi");
+        }
+        
+        switch (khuyenMai.getLoaiGiamGia()) {
+            case phan_tram:
+                BigDecimal phanTram = khuyenMai.getGiaTriGiam().divide(new BigDecimal(100));
+                return giaBanDau.multiply(phanTram);
+                
+            case so_tien_co_dinh:
+                if (khuyenMai.getGiaTriGiam().compareTo(giaBanDau) >= 0) {
+                    return giaBanDau; // Giảm toàn bộ giá trị đơn hàng
+                }
+                return khuyenMai.getGiaTriGiam();
+                
+            case tuy_chon_mien_phi:
+                // Đối với tùy chọn miễn phí, không có tiền giảm
+                return BigDecimal.ZERO;
+                
+            default:
+                return BigDecimal.ZERO;
+        }
+    }
+    
+    @Transactional
+    public void updateStatus(Long id, Integer trangThai) {
+        KhuyenMai khuyenMai = khuyenMaiRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Không tìm thấy khuyến mãi với ID: " + id));
+        khuyenMai.setTrangThai(trangThai);
+        khuyenMaiRepository.save(khuyenMai);
+    }
+    
+    @Transactional
+    public void capNhatDoanhThuKhuyenMai(Long idKhuyenMai, BigDecimal tongTien) {
+        DoanhThuKhuyenMai dt = doanhThuKhuyenMaiRepository.findByIdKhuyenMai(idKhuyenMai)
+            .orElseGet(() -> {
+                DoanhThuKhuyenMai m = new DoanhThuKhuyenMai();
+                m.setIdKhuyenMai(idKhuyenMai);
+                m.setSoLanSuDung(0);
+                m.setDoanhThuTaoRa(BigDecimal.ZERO);
+                return m;
+            });
+        dt.setSoLanSuDung(dt.getSoLanSuDung() + 1);
+        dt.setDoanhThuTaoRa(dt.getDoanhThuTaoRa().add(tongTien));
+        doanhThuKhuyenMaiRepository.save(dt);
+    }
+    
     private void kiemTraTonTaiDoiTuong(DieuKienKhuyenMai.LoaiDoiTuong loaiDoiTuong, Long idDoiTuong) {
         switch (loaiDoiTuong) {
             case mau_xe:
@@ -287,20 +360,20 @@ public class KhuyenMaiService {
         dto.setGioiHanSuDung(entity.getGioiHanSuDung());
         dto.setSoLanDaDung(entity.getSoLanDaDung());
         dto.setConHieuLuc(entity.conHieuLuc());
+        dto.setTrangThai(entity.getTrangThai()); // Thêm trường này
         
         // Chuyển đổi danh sách điều kiện
         List<DieuKienKhuyenMaiDTO> danhSachDieuKienDTO = new ArrayList<>();
-        for (DieuKienKhuyenMai dieuKien : entity.getDanhSachDieuKien()) {
-            DieuKienKhuyenMaiDTO dieuKienDTO = new DieuKienKhuyenMaiDTO();
-            dieuKienDTO.setId(dieuKien.getId());
-            dieuKienDTO.setIdKhuyenMai(entity.getId());
-            dieuKienDTO.setLoaiDoiTuong(dieuKien.getLoaiDoiTuong().name());
-            dieuKienDTO.setIdDoiTuong(dieuKien.getIdDoiTuong());
-            
-            // Thêm tên đối tượng cho dễ hiển thị
-            dieuKienDTO.setTenDoiTuong(layTenDoiTuong(dieuKien.getLoaiDoiTuong(), dieuKien.getIdDoiTuong()));
-            
-            danhSachDieuKienDTO.add(dieuKienDTO);
+        if (entity.getDanhSachDieuKien() != null) {
+            for (DieuKienKhuyenMai dieuKien : entity.getDanhSachDieuKien()) {
+                DieuKienKhuyenMaiDTO dieuKienDTO = new DieuKienKhuyenMaiDTO();
+                dieuKienDTO.setId(dieuKien.getId());
+                dieuKienDTO.setIdKhuyenMai(entity.getId());
+                dieuKienDTO.setLoaiDoiTuong(dieuKien.getLoaiDoiTuong().name());
+                dieuKienDTO.setIdDoiTuong(dieuKien.getIdDoiTuong());
+                dieuKienDTO.setTenDoiTuong(layTenDoiTuong(dieuKien.getLoaiDoiTuong(), dieuKien.getIdDoiTuong()));
+                danhSachDieuKienDTO.add(dieuKienDTO);
+            }
         }
         
         dto.setDanhSachDieuKien(danhSachDieuKienDTO);
@@ -394,6 +467,44 @@ public class KhuyenMaiService {
                 
             default:
                 return false;
+        }
+    }
+
+    // Tìm khuyến mãi phù hợp nhất cho tổng giá
+    public KhuyenMai timKhuyenMaiPhuHopNhat(BigDecimal tongGia) {
+        // Lấy tất cả khuyến mãi còn hiệu lực
+        List<KhuyenMai> danhSachKhuyenMai = khuyenMaiRepository.findActiveForAllModels();
+        
+        // Lọc khuyến mãi phù hợp với giá trị đơn hàng
+        List<KhuyenMai> khuyenMaiPhuHop = danhSachKhuyenMai.stream()
+                .filter(km -> km.hợpLeChoGiaTriDonHang(tongGia))
+                .collect(Collectors.toList());
+        
+        if (khuyenMaiPhuHop.isEmpty()) {
+            return null;
+        }
+        
+        // Sắp xếp theo giá trị giảm (cao nhất trước)
+        khuyenMaiPhuHop.sort((km1, km2) -> {
+            BigDecimal giaTri1 = tinhGiaTriGiam(km1, tongGia);
+            BigDecimal giaTri2 = tinhGiaTriGiam(km2, tongGia);
+            return giaTri2.compareTo(giaTri1);
+        });
+        
+        return khuyenMaiPhuHop.get(0);
+    }
+    
+    // Tính giá trị giảm thực tế
+    private BigDecimal tinhGiaTriGiam(KhuyenMai khuyenMai, BigDecimal tongGia) {
+        switch (khuyenMai.getLoaiGiamGia()) {
+            case phan_tram:
+                return tongGia.multiply(khuyenMai.getGiaTriGiam()).divide(BigDecimal.valueOf(100));
+            case so_tien_co_dinh:
+                return khuyenMai.getGiaTriGiam();
+            case tuy_chon_mien_phi:
+                return BigDecimal.ZERO; // Tạm thời return 0
+            default:
+                return BigDecimal.ZERO;
         }
     }
 }

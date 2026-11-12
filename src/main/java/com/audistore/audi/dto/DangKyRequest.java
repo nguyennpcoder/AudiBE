@@ -29,4 +29,5 @@ public class DangKyRequest {
     private String tinh;
     private String maBuuDien;
     private String quocGia;
+    private String avatar;
 }

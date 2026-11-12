@@ -37,6 +37,6 @@ public class DongXe {
     private List<MauXe> danhSachMauXe = new ArrayList<>();
 
     public enum PhanLoai {
-        SUV, Sedan, Coupe, Convertible, Sportback, Dien
+        SUV, Sedan, Coupe, Convertible, Sportback, Electric
     }
 }

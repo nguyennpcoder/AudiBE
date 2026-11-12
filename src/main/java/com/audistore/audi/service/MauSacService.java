@@ -6,6 +6,8 @@ import com.audistore.audi.model.MauXe;
 import com.audistore.audi.repository.MauSacRepository;
 import com.audistore.audi.repository.MauXeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,18 +27,21 @@ public class MauSacService {
         this.mauXeRepository = mauXeRepository;
     }
 
+    @Cacheable(cacheNames = "mauSac:all")
     public List<MauSacDTO> getAllMauSac() {
         return mauSacRepository.findAll().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "mauSac:byId", key = "#id")
     public MauSacDTO getMauSacById(Long id) {
         MauSac mauSac = mauSacRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc với ID: " + id));
         return convertToDTO(mauSac);
     }
 
+    @Cacheable(cacheNames = "mauSac:byMauXe", key = "#mauXeId")
     public List<MauSacDTO> getMauSacByMauXe(Long mauXeId) {
         MauXe mauXe = mauXeRepository.findById(mauXeId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe với ID: " + mauXeId));
@@ -47,6 +52,7 @@ public class MauSacService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = {"mauSac:all", "mauSac:byId", "mauSac:byMauXe"}, allEntries = true)
     public MauSacDTO createMauSac(MauSacDTO mauSacDTO) {
         MauSac mauSac = convertToEntity(mauSacDTO);
         MauSac savedMauSac = mauSacRepository.save(mauSac);
@@ -54,6 +60,7 @@ public class MauSacService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = {"mauSac:all", "mauSac:byId", "mauSac:byMauXe"}, allEntries = true)
     public MauSacDTO updateMauSac(Long id, MauSacDTO mauSacDTO) {
         if (!mauSacRepository.existsById(id)) {
             throw new RuntimeException("Không tìm thấy màu sắc với ID: " + id);
@@ -66,6 +73,7 @@ public class MauSacService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = {"mauSac:all", "mauSac:byId", "mauSac:byMauXe"}, allEntries = true)
     public void deleteMauSac(Long id) {
         if (!mauSacRepository.existsById(id)) {
             throw new RuntimeException("Không tìm thấy màu sắc với ID: " + id);

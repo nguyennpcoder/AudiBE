@@ -10,6 +10,8 @@ import com.audistore.audi.repository.MauSacRepository;
 import com.audistore.audi.repository.MauXeRepository;
 import com.audistore.audi.repository.TuyChonRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,18 +41,21 @@ public class MauXeService {
         this.tuyChonRepository = tuyChonRepository;
     }
 
+    @Cacheable(cacheNames = "mauXe:all")
     public List<MauXeDTO> getAllMauXe() {
         return mauXeRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "mauXe:byId", key = "#id")
     public MauXeDTO getMauXeById(Long id) {
         return mauXeRepository.findById(id)
                 .map(this::mapToDTO)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe với ID: " + id));
     }
 
+    @Cacheable(cacheNames = "mauXe:byDongXe", key = "#dongXeId")
     public List<MauXeDTO> getMauXeByDongXe(Long dongXeId) {
         DongXe dongXe = dongXeRepository.findById(dongXeId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy dòng xe với ID: " + dongXeId));
@@ -60,30 +65,35 @@ public class MauXeService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "mauXe:byNam", key = "#namSanXuat")
     public List<MauXeDTO> getMauXeByNamSanXuat(Integer namSanXuat) {
         return mauXeRepository.findByNamSanXuat(namSanXuat).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "mauXe:byConHang", key = "#conHang")
     public List<MauXeDTO> getMauXeByConHang(Boolean conHang) {
         return mauXeRepository.findByConHang(conHang).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "mauXe:search", key = "#keyword")
     public List<MauXeDTO> searchMauXe(String keyword) {
         return mauXeRepository.findByTenMauContainingIgnoreCase(keyword).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "mauXe:byGia", key = "#giaTu.toString().concat('-').concat(#giaDen.toString())")
     public List<MauXeDTO> getMauXeByGiaTrongKhoang(BigDecimal giaTu, BigDecimal giaDen) {
         return mauXeRepository.findByGiaTrongKhoang(giaTu, giaDen).stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(cacheNames = "mauXe:byPhanLoai", key = "#phanLoai")
     public List<MauXeDTO> getMauXeByPhanLoai(String phanLoai) {
         try {
             DongXe.PhanLoai loai = DongXe.PhanLoai.valueOf(phanLoai);
@@ -95,12 +105,14 @@ public class MauXeService {
         }
     }
 
+    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
     public MauXeDTO createMauXe(MauXeDTO mauXeDTO) {
         MauXe mauXe = mapToEntity(mauXeDTO);
         MauXe savedMauXe = mauXeRepository.save(mauXe);
         return mapToDTO(savedMauXe);
     }
 
+    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:byId", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
     public MauXeDTO updateMauXe(Long id, MauXeDTO mauXeDTO) {
         MauXe existingMauXe = mauXeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe với ID: " + id));
@@ -110,6 +122,7 @@ public class MauXeService {
         return mapToDTO(updatedMauXe);
     }
 
+    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:byId", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
     public void deleteMauXe(Long id) {
         if (!mauXeRepository.existsById(id)) {
             throw new RuntimeException("Không tìm thấy mẫu xe với ID: " + id);

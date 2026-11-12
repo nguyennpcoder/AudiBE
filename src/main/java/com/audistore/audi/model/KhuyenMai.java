@@ -56,6 +56,9 @@ public class KhuyenMai {
 
     @Column(name = "so_lan_da_dung")
     private Integer soLanDaDung = 0;
+    
+    @Column(name = "trang_thai")
+    private Integer trangThai = 1; // 1: còn hiệu lực, 0: hết hiệu lực
 
     @OneToMany(mappedBy = "khuyenMai", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DieuKienKhuyenMai> danhSachDieuKien = new ArrayList<>();
@@ -71,8 +74,8 @@ public class KhuyenMai {
     // Kiểm tra khuyến mãi có còn hiệu lực không
     public boolean conHieuLuc() {
         LocalDate now = LocalDate.now();
-        return !now.isBefore(ngayBatDau) && !now.isAfter(ngayKetThuc) && 
-               (gioiHanSuDung == null || soLanDaDung < gioiHanSuDung);
+        // Chỉ kiểm tra trangThai, không kiểm tra ngày nữa vì admin có thể tắt/bật thủ công
+        return trangThai == 1;
     }
 
     // Kiểm tra có thể áp dụng với giá trị đơn hàng không
