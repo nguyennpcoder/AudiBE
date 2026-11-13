@@ -1,6 +1,7 @@
 package com.audistore.audi.service;
 
 import com.audistore.audi.dto.MauXeDTO;
+import com.audistore.audi.dto.MauXeTomTatDTO;
 import com.audistore.audi.model.DongXe;
 import com.audistore.audi.model.MauSac;
 import com.audistore.audi.model.MauXe;
@@ -46,6 +47,15 @@ public class MauXeService {
         return mauXeRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Fast path for list pages: only the columns needed to render a card.
+     * Avoids loading colours/options for every model (N+1).
+     */
+    @Cacheable(cacheNames = "mauXe:tomTat")
+    public List<MauXeTomTatDTO> getAllMauXeTomTat() {
+        return mauXeRepository.findAllTomTat();
     }
 
     @Cacheable(cacheNames = "mauXe:byId", key = "#id")
@@ -105,14 +115,14 @@ public class MauXeService {
         }
     }
 
-    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
+    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:tomTat", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
     public MauXeDTO createMauXe(MauXeDTO mauXeDTO) {
         MauXe mauXe = mapToEntity(mauXeDTO);
         MauXe savedMauXe = mauXeRepository.save(mauXe);
         return mapToDTO(savedMauXe);
     }
 
-    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:byId", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
+    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:tomTat", "mauXe:byId", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
     public MauXeDTO updateMauXe(Long id, MauXeDTO mauXeDTO) {
         MauXe existingMauXe = mauXeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy mẫu xe với ID: " + id));
@@ -122,7 +132,7 @@ public class MauXeService {
         return mapToDTO(updatedMauXe);
     }
 
-    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:byId", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
+    @CacheEvict(cacheNames = {"mauXe:all", "mauXe:tomTat", "mauXe:byId", "mauXe:byDongXe", "mauXe:byNam", "mauXe:byConHang", "mauXe:search", "mauXe:byGia", "mauXe:byPhanLoai"}, allEntries = true)
     public void deleteMauXe(Long id) {
         if (!mauXeRepository.existsById(id)) {
             throw new RuntimeException("Không tìm thấy mẫu xe với ID: " + id);

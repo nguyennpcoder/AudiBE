@@ -1,6 +1,7 @@
 package com.audistore.audi.controller;
 
 import com.audistore.audi.dto.MauXeDTO;
+import com.audistore.audi.dto.MauXeTomTatDTO;
 import com.audistore.audi.service.MauXeService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,15 @@ public class MauXeController {
     @GetMapping
     public ResponseEntity<List<MauXeDTO>> getAllMauXe() {
         return ResponseEntity.ok(mauXeService.getAllMauXe());
+    }
+
+    /**
+     * Fast list for the /models page. Two path segments, so it does not
+     * clash with GET /{id}.
+     */
+    @GetMapping("/danh-sach/tom-tat")
+    public ResponseEntity<List<MauXeTomTatDTO>> getAllMauXeTomTat() {
+        return ResponseEntity.ok(mauXeService.getAllMauXeTomTat());
     }
 
     @GetMapping("/{id}")

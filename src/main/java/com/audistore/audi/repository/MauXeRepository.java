@@ -1,5 +1,6 @@
 package com.audistore.audi.repository;
 
+import com.audistore.audi.dto.MauXeTomTatDTO;
 import com.audistore.audi.model.DongXe;
 import com.audistore.audi.model.MauXe;
 import org.springframework.data.domain.Page;
@@ -24,4 +25,17 @@ public interface MauXeRepository extends JpaRepository<MauXe, Long>, JpaSpecific
     
     @Query("SELECT m FROM MauXe m JOIN m.dongXe d WHERE d.phanLoai = :phanLoai")
     List<MauXe> findByPhanLoai(DongXe.PhanLoai phanLoai);
+
+    /**
+     * Projection used by the /models overview. Joins the body style in the
+     * same query and never touches the lazy colour/option collections.
+     */
+    @Query("""
+            SELECT new com.audistore.audi.dto.MauXeTomTatDTO(
+                m.id, d.id, d.ten, m.tenMau, m.namSanXuat, m.giaCoban, m.conHang)
+            FROM MauXe m
+            JOIN m.dongXe d
+            ORDER BY d.id ASC, m.id ASC
+            """)
+    List<MauXeTomTatDTO> findAllTomTat();
 }

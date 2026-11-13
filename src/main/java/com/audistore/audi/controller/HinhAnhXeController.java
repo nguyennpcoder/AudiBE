@@ -1,6 +1,7 @@
 package com.audistore.audi.controller;
 
 import com.audistore.audi.dto.HinhAnhXeDTO;
+import com.audistore.audi.dto.MauXeAnhDaiDienDTO;
 import com.audistore.audi.dto.UploadImageResponseDTO;
 import com.audistore.audi.service.HinhAnhXeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,11 @@ public class HinhAnhXeController {
     @GetMapping("/{id}")
     public ResponseEntity<HinhAnhXeDTO> getHinhAnhById(@PathVariable Long id) {
         return ResponseEntity.ok(hinhAnhXeService.getHinhAnhById(id));
+    }
+
+    @GetMapping("/danh-sach/dai-dien")
+    public ResponseEntity<List<MauXeAnhDaiDienDTO>> getAnhDaiDienByMauXe() {
+        return ResponseEntity.ok(hinhAnhXeService.getAnhDaiDienByMauXe());
     }
     
     @GetMapping("/mau-xe/{idMauXe}")

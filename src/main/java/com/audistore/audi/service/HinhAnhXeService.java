@@ -1,6 +1,7 @@
 package com.audistore.audi.service;
 
 import com.audistore.audi.dto.HinhAnhXeDTO;
+import com.audistore.audi.dto.MauXeAnhDaiDienDTO;
 import com.audistore.audi.dto.UploadImageResponseDTO;
 import com.audistore.audi.model.HinhAnhXe;
 import com.audistore.audi.model.MauXe;
@@ -19,7 +20,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -58,6 +61,40 @@ public class HinhAnhXeService {
         HinhAnhXe.LoaiHinh loai = HinhAnhXe.LoaiHinh.valueOf(loaiHinh);
         return hinhAnhXeRepository.findByMauXeIdAndLoaiHinh(idMauXe, loai).stream()
                 .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * One cover image per model, selected in a single query.
+     * Priority: exterior shot first, then the lowest "viTri".
+     */
+    public List<MauXeAnhDaiDienDTO> getAnhDaiDienByMauXe() {
+        Map<Long, AnhChon> best = new LinkedHashMap<>();
+
+        for (Object[] row : hinhAnhXeRepository.findAnhDaiDienCandidates()) {
+            if (row[0] == null || row[1] == null) {
+                continue;
+            }
+
+            Long idMauXe = ((Number) row[0]).longValue();
+            String duongDan = (String) row[1];
+            if (duongDan.isBlank()) {
+                continue;
+            }
+
+            HinhAnhXe.LoaiHinh loai = (HinhAnhXe.LoaiHinh) row[2];
+            Integer viTri = row[3] == null ? null : ((Number) row[3]).intValue();
+            AnhChon candidate = new AnhChon(duongDan, loai, viTri);
+            AnhChon current = best.get(idMauXe);
+
+            if (current == null || candidate.isBetterThan(current)) {
+                best.put(idMauXe, candidate);
+            }
+        }
+
+        return best.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> new MauXeAnhDaiDienDTO(entry.getKey(), entry.getValue().duongDan))
                 .collect(Collectors.toList());
     }
     
@@ -196,6 +233,31 @@ public class HinhAnhXeService {
         hinhAnhXeRepository.deleteByMauXeId(idMauXe);
     }
     
+    private static final class AnhChon {
+        private final String duongDan;
+        private final HinhAnhXe.LoaiHinh loai;
+        private final Integer viTri;
+
+        private AnhChon(String duongDan, HinhAnhXe.LoaiHinh loai, Integer viTri) {
+            this.duongDan = duongDan;
+            this.loai = loai;
+            this.viTri = viTri;
+        }
+
+        private boolean isExterior() {
+            return loai == HinhAnhXe.LoaiHinh.ngoai_that;
+        }
+
+        private boolean isBetterThan(AnhChon other) {
+            if (isExterior() != other.isExterior()) {
+                return isExterior();
+            }
+            int thisPosition = viTri == null ? Integer.MAX_VALUE : viTri;
+            int otherPosition = other.viTri == null ? Integer.MAX_VALUE : other.viTri;
+            return thisPosition < otherPosition;
+        }
+    }
+
     private HinhAnhXeDTO mapToDTO(HinhAnhXe hinhAnh) {
         HinhAnhXeDTO dto = new HinhAnhXeDTO();
         dto.setId(hinhAnh.getId());
